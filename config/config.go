@@ -15,6 +15,7 @@ type (
 		Cache       Cache     `json:"cache"`
 		Whitelist   Whitelist `json:"whitelist"`
 		PasswordAlg string    `json:"password_alg"`
+		Storage     Storage   `json:"storage"`
 	}
 
 	App struct {
@@ -50,6 +51,18 @@ type (
 	API struct {
 		Endpoint string   `json:"endpoint"`
 		Methods  []string `json:"methods"`
+	}
+
+	Storage struct {
+		Minio struct {
+			Endpoint  string `json:"endpoint"`
+			Bucket    string `json:"bucket"`
+			AccessKey string `json:"access_key"`
+			SecretKey string `json:"secret_key"`
+			Region    string `json:"region"`
+			Secure    bool   `json:"secure"`
+			Token     string `json:"token"`
+		} `json:"minio"`
 	}
 )
 

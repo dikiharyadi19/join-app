@@ -29,5 +29,15 @@
             ]
         },
         "password_alg": ""
+    },
+    "storage": {
+        "minio": {
+            "endpoint": "localhost:9000",
+            "bucket": "bucket",
+            "access_key": "minio",
+            "secret_key": "minio123",
+            "secure": false,
+            "token": ""
+        }
     }
 }

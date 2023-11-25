@@ -6,11 +6,9 @@ import (
 	"encoding/base64"
 	"errors"
 	"github/yogabagas/join-app/shared/constant"
-	"io"
 	"math/rand"
 	"net/http"
 	"os"
-	"path/filepath"
 	"regexp"
 	"time"
 
@@ -75,34 +73,14 @@ func GetTotalPage(totalData int, perPage int) int {
 	return (totalData + perPage - 1) / perPage
 }
 
-func ParseFileUpload(r *http.Request, keyFormFile string, folder string) (filename string, err error) {
-	if err := r.ParseMultipartForm(1024); err != nil {
-		return "", err
-	}
+func GetFileContentType(out *os.File) string {
+	buffer := make([]byte, 512)
 
-	uploadedFile, handler, err := r.FormFile(keyFormFile)
+	_, err := out.Read(buffer)
 	if err != nil {
-		return "", err
+		return ""
 	}
-	defer uploadedFile.Close()
+	contentType := http.DetectContentType(buffer)
 
-	dir, err := os.Getwd()
-	if err != nil {
-		return "", err
-	}
-
-	filename = handler.Filename
-
-	fileLocation := filepath.Join(dir, folder, filename)
-	targetFile, err := os.OpenFile(fileLocation, os.O_WRONLY|os.O_CREATE, 0666)
-	if err != nil {
-		return "", err
-	}
-	defer targetFile.Close()
-
-	if _, err := io.Copy(targetFile, uploadedFile); err != nil {
-		return "", err
-	}
-
-	return filename, err
+	return contentType
 }
