@@ -37,19 +37,46 @@ definitions:
     type: object
   service.CreateUsersReq:
     properties:
+      bio:
+        type: string
       birthdate:
+        type: string
+      country:
         type: string
       email:
         type: string
       first_name:
         type: string
+      gender:
+        type: integer
       last_name:
         type: string
       password:
         type: string
+      photo:
+        type: string
       role_id:
         type: integer
       username:
+        type: string
+    type: object
+  service.GetAccessByRoleUIDResp:
+    properties:
+      action:
+        type: string
+      child:
+        items:
+          $ref: '#/definitions/service.GetAccessByRoleUIDResp'
+        type: array
+      level:
+        type: integer
+      name:
+        type: string
+      parent_id:
+        type: string
+      type:
+        type: integer
+      uid:
         type: string
     type: object
   service.GetUsersWithPaginationResp:
@@ -61,6 +88,16 @@ definitions:
           $ref: '#/definitions/service.UserResp'
         type: array
     type: object
+  service.LoginReq:
+    properties:
+      email:
+        type: string
+      password:
+        type: string
+    required:
+    - email
+    - password
+    type: object
   service.Pagination:
     properties:
       page:
@@ -71,6 +108,23 @@ definitions:
         type: integer
       total_page:
         type: integer
+    type: object
+  service.UpsertAccessReq:
+    properties:
+      createdAt:
+        type: string
+      createdBy:
+        type: string
+      resources_uid:
+        items:
+          type: string
+        type: array
+      role_uid:
+        type: string
+      updatedAt:
+        type: string
+      updatedBy:
+        type: string
     type: object
   service.UserResp:
     properties:
@@ -98,6 +152,123 @@ info:
   title: Join App API
   version: "1.0"
 paths:
+  /v1/access:
+    put:
+      description: UpsertAccess for update and insert existing/new access
+      parameters:
+      - description: Request Upsert Access
+        in: body
+        name: access
+        required: true
+        schema:
+          $ref: '#/definitions/service.UpsertAccessReq'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.JSONResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.JSONResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.JSONResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: UpsertAccess
+      tags:
+      - Access
+  /v1/access/{type}:
+    get:
+      description: GetAccessByRoleUID for get access by role uid
+      parameters:
+      - description: resource type
+        in: path
+        name: type
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.JSONResponse'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/service.GetAccessByRoleUIDResp'
+                  type: array
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.JSONResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.JSONResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: GetAccessByRoleUID
+      tags:
+      - Access
+  /v1/login:
+    post:
+      description: Login endpoint
+      parameters:
+      - description: Request Login
+        in: body
+        name: users
+        required: true
+        schema:
+          $ref: '#/definitions/service.LoginReq'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.JSONResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.JSONResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.JSONResponse'
+      summary: Login
+      tags:
+      - Users
+  /v1/logout:
+    post:
+      description: Logout endpoint
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.JSONResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.JSONResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.JSONResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: Logout
+      tags:
+      - Users
   /v1/resources:
     post:
       description: New Resources Registration
@@ -123,6 +294,8 @@ paths:
           description: Internal Server Error
           schema:
             $ref: '#/definitions/response.JSONResponse'
+      security:
+      - ApiKeyAuth: []
       summary: Create New Resources
       tags:
       - Resources
@@ -132,7 +305,7 @@ paths:
       parameters:
       - description: Request Create Role
         in: body
-        name: users
+        name: roles
         required: true
         schema:
           $ref: '#/definitions/service.CreateRolesReq'
@@ -151,6 +324,8 @@ paths:
           description: Internal Server Error
           schema:
             $ref: '#/definitions/response.JSONResponse'
+      security:
+      - ApiKeyAuth: []
       summary: Create New Roles
       tags:
       - Roles
@@ -190,6 +365,8 @@ paths:
           description: Internal Server Error
           schema:
             $ref: '#/definitions/response.JSONResponse'
+      security:
+      - ApiKeyAuth: []
       summary: GetUsersWithPagination
       tags:
       - Users
@@ -220,4 +397,9 @@ paths:
       summary: Create New User
       tags:
       - Users
+securityDefinitions:
+  ApiKeyAuth:
+    in: header
+    name: Authorization
+    type: apiKey
 swagger: "2.0"

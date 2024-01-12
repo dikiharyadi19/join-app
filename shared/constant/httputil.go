@@ -13,6 +13,7 @@ const (
 	StatusUnauthorized          = http.StatusUnauthorized
 	StatusCreated               = http.StatusCreated
 	StatusAccepted              = http.StatusAccepted
+	StatusNoContent             = http.StatusNoContent
 	StatusForbidden             = http.StatusForbidden
 	StatusInvalidAuthentication = http.StatusProxyAuthRequired
 	StatusNotFound              = http.StatusNotFound
@@ -26,6 +27,7 @@ var statusMap = map[int][]string{
 	StatusUnauthorized:          {"STATUS_UNAUTHORIZED", "Not authorized to access the service"},
 	StatusCreated:               {"STATUS_CREATED", "Resource has been created"},
 	StatusAccepted:              {"STATUS_ACCEPTED", "Resource has been accepted"},
+	StatusNoContent:             {"STATUS_NO_CONTENT", "Resource has been delete"},
 	StatusForbidden:             {"STATUS_FORBIDDEN", "Forbidden access the resource "},
 	StatusInvalidAuthentication: {"STATUS_INVALID_AUTHENTICATION", "The resource owner or authorization server denied the request"},
 	StatusNotFound:              {"STATUS_NOT_FOUND", "Not Found"},

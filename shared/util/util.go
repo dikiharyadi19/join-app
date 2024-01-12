@@ -6,9 +6,11 @@ import (
 	"encoding/base64"
 	"errors"
 	"github/yogabagas/join-app/shared/constant"
+	"io"
 	"math/rand"
 	"net/http"
 	"os"
+	"path/filepath"
 	"regexp"
 	"time"
 
@@ -83,4 +85,36 @@ func GetFileContentType(out *os.File) string {
 	contentType := http.DetectContentType(buffer)
 
 	return contentType
+}
+
+func ParseFileUpload(r *http.Request, keyFormFile string, folder string) (filename string, err error) {
+	if err := r.ParseMultipartForm(1024); err != nil {
+		return "", err
+	}
+
+	uploadedFile, handler, err := r.FormFile(keyFormFile)
+	if err != nil {
+		return "", err
+	}
+	defer uploadedFile.Close()
+
+	dir, err := os.Getwd()
+	if err != nil {
+		return "", err
+	}
+
+	filename = handler.Filename
+
+	fileLocation := filepath.Join(dir, folder, filename)
+	targetFile, err := os.OpenFile(fileLocation, os.O_WRONLY|os.O_CREATE, 0666)
+	if err != nil {
+		return "", err
+	}
+	defer targetFile.Close()
+
+	if _, err := io.Copy(targetFile, uploadedFile); err != nil {
+		return "", err
+	}
+
+	return filename, err
 }

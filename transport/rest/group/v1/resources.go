@@ -9,4 +9,5 @@ import (
 
 func NewResourcesV1(h handler.HandlerImpl, r *mux.Router) {
 	r.HandleFunc("/resources", h.CreateResources).Methods(http.MethodPost)
+	r.HandleFunc("/resources/{type}", h.GetResourcesByType).Methods(http.MethodGet)
 }

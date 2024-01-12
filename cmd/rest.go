@@ -24,7 +24,7 @@ var serverCmd = &cobra.Command{
 		config.LoadConfig(configURL)
 
 		sqlDB, _ = InitSQLModule()
-		redisClient = InitCache()
+		redisClient, _ = InitCache()
 	},
 	Run: func(cmd *cobra.Command, args []string) {
 
@@ -34,7 +34,7 @@ var serverCmd = &cobra.Command{
 				ReadTimeout:  time.Duration(config.GlobalCfg.App.ReadTimeout * int(time.Second)),
 				WriteTimeout: time.Duration(config.GlobalCfg.App.WriteTimeout * int(time.Second)),
 				Sql:          sqlDB.MySQL,
-				Cache:        redisClient,
+				Redis:        redisClient.Client,
 			},
 		)
 		go rest.Serve()

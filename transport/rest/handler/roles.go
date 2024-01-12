@@ -12,7 +12,8 @@ import (
 // @Description Roles registration endpoint
 // @Tags Roles
 // @Produce json
-// @Param users body service.CreateRolesReq true "Request Create Role"
+// @Security ApiKeyAuth
+// @Param roles body service.CreateRolesReq true "Request Create Role"
 // @Success 200 {object} response.JSONResponse().APIStatusCreated()
 // @Failure 400 {object} response.JSONResponse
 // @Failure 500 {object} response.JSONResponse

@@ -1,9 +1,9 @@
 name: join-apps-ci-cd
-run-name: Deploy to 'master' by @${{ github.actor }}
+run-name: Deploy to ${{ github.ref }} by @${{ github.actor }}
 
 on:
   push:
-    branches: ['master']
+    branches: ['master', 'develop']
 
 jobs:
   build:
@@ -37,8 +37,25 @@ jobs:
           push: true
           tags: yogabagas/join-app:latest
 
-      - name: Deploy
+      - name: Deploy to Dev
         uses: appleboy/ssh-action@master
+        if: endsWith(github.ref, '/develop')
+        with:
+          host: ${{ secrets.VPS_DEV_HOST }}
+          username: ${{ secrets.VPS_DEV_USERNAME }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            docker pull yogabagas/join-app:latest
+            docker-compose -f docker-compose-app-dev.yml down --remove-orphans
+            docker-compose -f docker-compose-db-dev.yml up -d
+            docker-compose -f docker-compose-cache-dev.yml up -d
+            docker-compose -f docker-compose-app-dev.yml up -d
+            docker image prune -f
+            docker cp config/files/config.dev.json join-app:/app/config/files/config.dev.json
+
+      - name: Deploy to Production
+        uses: appleboy/ssh-action@master
+        if: endsWith(github.ref, '/master')
         with:
           host: ${{ secrets.VPS_HOST }}
           username: ${{ secrets.VPS_USERNAME }}
@@ -46,8 +63,10 @@ jobs:
           script: |
             docker pull yogabagas/join-app:latest
             docker-compose -f docker-compose-app-prod.yml down --remove-orphans
-            docker-compose -f docker-compose-db-prod.yml up -d
-            docker-compose -f docker-compose-cache-prod.yml up -d
-            docker-compose -f docker-compose-app-prod.yml up -d
+            docker-compose -f docker-compose-app-bundle-prod.yml up -d
             docker image prune -f
             docker cp config/config.prod.json join-app:/app/config/files/config.prod.json
+            sudo rm -r join-app/database/migration/*
+            sudo docker cp join-app:/app/database/migration/v1/. join-app/database/migration/
+      
+     

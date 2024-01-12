@@ -3,7 +3,8 @@ module github/yogabagas/join-app
 go 1.20
 
 require (
-	github.com/dgrijalva/jwt-go v3.2.0+incompatible
+	github.com/go-jose/go-jose/v3 v3.0.0
+	github.com/go-ozzo/ozzo-validation/v4 v4.3.0
 	github.com/go-redis/redis/extra/redisotel v0.3.0
 	github.com/go-redis/redis/v8 v8.11.5
 	github.com/go-sql-driver/mysql v1.7.1
@@ -13,7 +14,6 @@ require (
 	github.com/matthewhartstonge/argon2 v0.3.3
 	github.com/minio/minio-go/v7 v7.0.64
 	github.com/oklog/ulid/v2 v2.1.0
-	github.com/rs/cors v1.9.0
 	github.com/spf13/cobra v1.7.0
 	github.com/swaggo/http-swagger v1.3.4
 	github.com/swaggo/swag v1.16.1

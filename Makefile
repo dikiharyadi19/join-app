@@ -22,3 +22,12 @@ mock-usecase:
 
 run-test:
 	go test service/library/usecase/library.go service/library/usecase/library_test.go -v -cover
+
+migrate-create:
+	migrate create -ext ${ext} -dir ${dir} ${filename}
+
+migrate-up:
+	migrate -path ${path} -database ${host} -verbose up
+
+migrate-force:
+	migrate -path ${path} -database ${host} force ${version}

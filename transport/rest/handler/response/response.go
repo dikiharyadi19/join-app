@@ -234,6 +234,14 @@ func (r *JSONResponse) APIStatusAccepted() *JSONResponse {
 	return r
 }
 
+// APIStatusNoContent
+func (r *JSONResponse) APIStatusNoContent() *JSONResponse {
+	r.StatusCode = constant.StatusNoContent
+	r.Code = constant.StatusCode(constant.StatusNoContent)
+	r.Message = constant.StatusText(constant.StatusNoContent)
+	return r
+}
+
 // APIStatusErrorUnknown
 func (r *JSONResponse) APIStatusErrorUnknown() *JSONResponse {
 	r.StatusCode = constant.StatusErrorUnknown

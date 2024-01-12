@@ -13,7 +13,7 @@ func (m *module) NewUsersPresenter() presenter.UsersPresenter {
 func (m *module) NewUsersRegistry() usecase.UsersService {
 	return usecase.NewUsersService(
 		m.NewRepositoryRegistry(),
-		m.NewSessionRepositoryRegistry(),
+		m.NewCacheRegistry(),
 		m.NewUsersPresenter())
 }
 

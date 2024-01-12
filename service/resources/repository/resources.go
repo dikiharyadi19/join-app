@@ -7,4 +7,5 @@ import (
 
 type ResourcesRepository interface {
 	CreateResources(ctx context.Context, req *model.Resource) error
+	ReadResourcesByType(ctx context.Context, req *model.ReadResourcesByTypeReq) ([]*model.ReadResourcesByTypeResp, error)
 }

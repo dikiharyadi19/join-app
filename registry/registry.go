@@ -3,14 +3,16 @@ package registry
 import (
 	"database/sql"
 	"github/yogabagas/join-app/adapter/controller"
-	repoCache "github/yogabagas/join-app/domain/repository/cache"
+	"github/yogabagas/join-app/domain/repository/cache"
 	repo "github/yogabagas/join-app/domain/repository/sql"
-	"github/yogabagas/join-app/pkg/cache"
+
+	"github.com/go-redis/redis/v8"
 )
 
 type module struct {
 	sqlDB *sql.DB
-	cache cache.Cache
+	cache *redis.Client
+	ns    string
 }
 
 type Registry interface {
@@ -35,25 +37,28 @@ func NewSQLConn(db *sql.DB) Option {
 	}
 }
 
-func NewCache(cache cache.Cache) Option {
+func NewCache(redisClient *redis.Client) Option {
 	return func(m *module) {
-		m.cache = cache
+		m.cache = redisClient
 	}
 }
 
 func (m *module) NewRepositoryRegistry() repo.RepositoryRegistry {
-	return repo.NewRepositoryRegistry(m.sqlDB, m.cache)
+	return repo.NewRepositoryRegistry(m.sqlDB)
 }
 
-func (m *module) NewSessionRepositoryRegistry() repoCache.RepositoryRegistry {
-	return repoCache.NewRepositoryRegistry(m.sqlDB, m.cache)
+func (m *module) NewCacheRegistry() cache.Cache {
+	return cache.NewCacheRepository(m.cache, m.ns)
 }
 
 func (m *module) NewAppController() controller.AppController {
 	return controller.AppController{
-		UsersController:     m.NewUsersController(),
-		RolesController:     m.NewRolesController(),
+		AccessController:    m.NewAccessController(),
+		AuthzController:     m.NewAuthzController(),
+		JWKController:       m.NewJWKController(),
 		ResourcesController: m.NewResourcesController(),
 		ModulesController:   m.NewCoursesController(),
+		RolesController:     m.NewRolesController(),
+		UsersController:     m.NewUsersController(),
 	}
 }

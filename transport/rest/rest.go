@@ -4,7 +4,6 @@ import (
 	"database/sql"
 	"fmt"
 	"github/yogabagas/join-app/config"
-	"github/yogabagas/join-app/pkg/cache"
 	"github/yogabagas/join-app/registry"
 	groupV1 "github/yogabagas/join-app/transport/rest/group/v1"
 	"github/yogabagas/join-app/transport/rest/handler"
@@ -18,7 +17,7 @@ import (
 
 	_ "github/yogabagas/join-app/docs"
 
-	"github.com/rs/cors"
+	"github.com/go-redis/redis/v8"
 	httpSwagger "github.com/swaggo/http-swagger"
 
 	"github.com/gorilla/mux"
@@ -29,7 +28,7 @@ type Option struct {
 	ReadTimeout  time.Duration
 	WriteTimeout time.Duration
 	Sql          *sql.DB
-	Cache        cache.Cache
+	Redis        *redis.Client
 	Mux          *mux.Router
 }
 
@@ -49,35 +48,32 @@ type Handler struct {
 // @license.name Apache 2.0
 // @license.url http://www.apache.org/licenses/LICENSE-2.0.html
 // @BasePath /
-// @name Mentoring App
+// @securityDefinitions.apikey ApiKeyAuth
+// @in header
+// @name Authorization
 func NewRest(o *Option) *Handler {
 
 	reg := registry.NewRegistry(
 		registry.NewSQLConn(o.Sql),
-		registry.NewCache(o.Cache),
+		registry.NewCache(o.Redis),
 	)
 
 	appController := reg.NewAppController()
-	middleware := middlewares.NewMiddleware()
+	middleware := middlewares.NewMiddleware(reg)
 
 	handlerImpl := handler.HandlerImpl{
 		Controller: appController,
 	}
 
-	c := cors.New(cors.Options{
-		AllowedOrigins: []string{"*"},
-		AllowedMethods: []string{"*"},
-		AllowedHeaders: []string{"*"},
-	})
-
 	r := mux.NewRouter()
-	r.Use(c.Handler)
+	r.Use(middleware.AuthenticationMiddleware)
+
 	// r.Use(middleware.CORSHandle)
 
-	URI := fmt.Sprintf("%s%s", config.GlobalCfg.App.Host, config.GlobalCfg.App.Port)
+	// URI := fmt.Sprintf("%s%s", config.GlobalCfg.App.Host, config.GlobalCfg.App.Port)
 
 	r.PathPrefix("/swagger/").Handler(httpSwagger.Handler(
-		httpSwagger.URL(fmt.Sprintf("http://%s/swagger/doc.json", URI)),
+		httpSwagger.URL(fmt.Sprintf("%s/swagger/doc.json", config.GlobalCfg.App.Host)),
 		httpSwagger.DeepLinking(true),
 		httpSwagger.DocExpansion("none"),
 		httpSwagger.DomID("swagger-ui"),
@@ -85,8 +81,11 @@ func NewRest(o *Option) *Handler {
 	r.PathPrefix("/health").HandlerFunc(handlerImpl.Healthcheck)
 
 	v1 := r.PathPrefix("/v1").Subrouter()
-	v1.Use(middleware.AuthenticationMiddleware)
 
+	// v1.Use(middleware.AuthenticationMiddleware)
+
+	groupV1.NewAccessV1(handlerImpl, v1)
+	groupV1.NewAuthzV1(handlerImpl, v1)
 	groupV1.NewUsersV1(handlerImpl, v1)
 	groupV1.NewRolesV1(handlerImpl, v1)
 	groupV1.NewResourcesV1(handlerImpl, v1)

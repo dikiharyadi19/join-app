@@ -4,21 +4,19 @@ type CreateUsersReq struct {
 	FirstName string `json:"first_name"`
 	LastName  string `json:"last_name"`
 	Birthdate string `json:"birthdate"`
+	Gender    int    `json:"gender"`
+	Country   string `json:"country"`
 	Email     string `json:"email"`
+	Photo     string `json:"photo"`
+	Bio       string `json:"bio"`
 	RoleID    int    `json:"role_id"`
 	Username  string `json:"username"`
 	Password  string `json:"password"`
 	CreatedBy string `json:"-"`
 }
 
-type LoginReq struct {
-	Email    string `json:"email" validate:"required"`
-	Password string `json:"password" validate:"required"`
-}
-
-type LoginRes struct {
-	AccessToken  string `json:"access_token"`
-	RefreshToken string `json:"refresh_token"`
+type LogoutReq struct {
+	UserUID string `json:"user_uid"`
 }
 
 type GetUsersWithPaginationReq struct {

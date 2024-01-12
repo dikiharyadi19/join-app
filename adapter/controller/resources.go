@@ -12,6 +12,7 @@ type ResourcesControllerImpl struct {
 
 type ResourcesController interface {
 	CreateResources(ctx context.Context, req service.CreateResourcesReq) error
+	GetResourcesByType(ctx context.Context, req service.GetResourcesByTypeReq) ([]service.GetResourcesByTypeResp, error)
 }
 
 func NewResourcesController(resourcesSvc usecase.ResourcesService) ResourcesController {
@@ -20,4 +21,8 @@ func NewResourcesController(resourcesSvc usecase.ResourcesService) ResourcesCont
 
 func (rc *ResourcesControllerImpl) CreateResources(ctx context.Context, req service.CreateResourcesReq) error {
 	return rc.resourcesSvc.CreateResources(ctx, req)
+}
+
+func (rc *ResourcesControllerImpl) GetResourcesByType(ctx context.Context, req service.GetResourcesByTypeReq) ([]service.GetResourcesByTypeResp, error) {
+	return rc.resourcesSvc.GetResourcesByType(ctx, req)
 }

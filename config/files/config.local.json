@@ -1,0 +1,60 @@
+{
+    "app": {
+        "name": "print-in app",
+        "host": "localhost",
+        "port": ":8800",
+        "read_timeout": 30,
+        "write_timeout": 30,
+        "jwt_secret": "secret"
+    },
+    "jwk": {
+        "size": 1024,
+        "key_id": "default",
+        "alg": "RS256",
+        "use": "sig",
+        "ttl_in_hours": 730
+    },
+    "db": {
+        "sql": {
+            "user": "root",
+            "password": "root",
+            "host": "localhost:3306",
+            "schema": "joindb"
+        }
+    },
+    "cache": {
+        "redis": {
+            "user": "",
+            "password": "eYVX7EwVmmxKPCDmwMtyKVge8oLd2t81",
+            "host": "localhost:6379"
+        }
+    },
+    "whitelist": {
+        "api": [
+            {
+                "endpoint": "/v1/login",
+                "methods": ["POST"]
+            },
+            {
+                "endpoint": "/swagger/*",
+                "methods": ["GET"]
+            }, 
+            {
+                "endpoint": "/v1/users",
+                "methods": ["POST"]
+            }
+        ]
+    },
+    "storage": {
+        "minio": {
+            "endpoint": "localhost:9000",
+            "access_key": "minio",
+            "secret_key": "minio123",
+            "bucket": "joindb",
+            "secure": false
+        }
+    },
+    "password_alg": "sha",
+    "token_exp": 28800,
+    "refresh_token_exp": 86400
+}

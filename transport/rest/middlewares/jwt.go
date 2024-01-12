@@ -3,30 +3,36 @@ package middlewares
 import (
 	"context"
 	"errors"
-	"fmt"
+	"github/yogabagas/join-app/adapter/controller"
 	"github/yogabagas/join-app/config"
+	"github/yogabagas/join-app/domain/service"
+	"github/yogabagas/join-app/registry"
+	"github/yogabagas/join-app/shared/constant"
 	"github/yogabagas/join-app/transport/rest/handler/response"
 	"net/http"
 	"strings"
-
-	"github.com/dgrijalva/jwt-go"
 )
 
-type MiddlewareImpl struct{}
+type MiddlewareImpl struct {
+	appController controller.AppController
+}
 
 type Middleware interface {
 	AuthenticationMiddleware(next http.Handler) http.Handler
 	CORSHandle(next http.Handler) http.Handler
 }
 
-func NewMiddleware() Middleware {
-	return &MiddlewareImpl{}
+func NewMiddleware(r registry.Registry) Middleware {
+	return &MiddlewareImpl{
+		appController: r.NewAppController(),
+	}
 }
 
 // AuthenticationMiddleware validates the JWT token.
 func (mi *MiddlewareImpl) AuthenticationMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		ctx := context.Background()
+		ctx := r.Context()
+
 		if !mi.isWhitelist(r.URL.Path, r.Method) {
 			res := response.NewJSONResponse()
 
@@ -37,11 +43,12 @@ func (mi *MiddlewareImpl) AuthenticationMiddleware(next http.Handler) http.Handl
 				return
 			}
 
-			valid, newCtx := mi.parseJwt(token, r)
+			newCtx, valid := mi.parseJwt(ctx, token)
 			if !valid {
-				res.SetError(response.ErrUnauthorized).SetMessage(errors.New("invalid authorized token").Error()).Send(w)
+				res.SetError(response.ErrUnauthorized).SetMessage(errors.New("invalid authorized token, please re-authenticate").Error()).Send(w)
 				return
 			}
+
 			ctx = newCtx
 		}
 
@@ -53,6 +60,13 @@ func (mi *MiddlewareImpl) isWhitelist(endpoint, method string) bool {
 	mapAPI := make(map[string][]string)
 
 	for _, v := range config.GlobalCfg.Whitelist.APIs {
+
+		if strings.ContainsAny(v.Endpoint, "*") {
+			if v.Endpoint[:strings.Index(v.Endpoint, "*")] == endpoint[:strings.Index(v.Endpoint, "*")] {
+				v.Endpoint = endpoint
+			}
+		}
+
 		mapAPI[v.Endpoint] = append(mapAPI[v.Endpoint], v.Methods...)
 	}
 
@@ -67,19 +81,32 @@ func (mi *MiddlewareImpl) isWhitelist(endpoint, method string) bool {
 	return false
 }
 
-func (mi *MiddlewareImpl) parseJwt(authorizationHeader string, r *http.Request) (valid bool, ctx context.Context) {
-	bearerToken := strings.Split(authorizationHeader, " ")
-	if len(bearerToken) == 2 {
-		token, _ := jwt.Parse(bearerToken[1], func(token *jwt.Token) (interface{}, error) {
-			if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
-				return nil, fmt.Errorf("There was an error")
-			}
-			return []byte(config.GlobalCfg.App.JwtSecret), nil
-		})
+func (mi *MiddlewareImpl) parseJwt(ctx context.Context, token string) (context.Context, bool) {
 
-		ctx = context.WithValue(r.Context(), "user_data", token)
+	jwtSvc := mi.appController.JWKController
+	authzSvc := mi.appController.AuthzController
 
-		return token.Valid, ctx
+	resp, err := jwtSvc.VerifyJWT(ctx, service.VerifyTokenReq{
+		Token: token,
+	})
+	if err != nil {
+		return ctx, false
 	}
-	return false, ctx
+
+	claims := service.JWTClaims{
+		Sub:        resp.UserUID,
+		RoleUID:    resp.RoleUID,
+		LastActive: resp.LastActive,
+		ExpiredAt:  resp.ExpiredAt,
+	}
+
+	auth, _ := authzSvc.HasAuthenticated(ctx, service.HasAuthenticatedReq{
+		Sub: claims.Sub,
+	})
+
+	if !auth.Valid {
+		return ctx, false
+	}
+
+	return context.WithValue(ctx, constant.Claim, claims), true
 }
